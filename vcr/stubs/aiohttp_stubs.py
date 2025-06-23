@@ -154,12 +154,18 @@ def play_responses(cassette, vcr_request, kwargs):
 async def record_response(cassette, vcr_request, response):
     """Record a VCR request-response chain to the cassette."""
 
+    body = {}
     try:
-        body = {"string": (await response.read())}
-    # aiohttp raises a ClientConnectionError on reads when
-    # there is no body. We can use this to know to not write one.
+        chunks = []
+        async for raw in response.content.iter_chunked(4*1024):
+            chunks.append(raw)
+            yield raw
+
+            body = {"string": b"".join(chunks)}
+
+            print("BODY", body)
     except ClientConnectionError:
-        body = {}
+        pass
 
     vcr_response = {
         "status": {"code": response.status, "message": response.reason},
@@ -168,6 +174,7 @@ async def record_response(cassette, vcr_request, response):
     }
 
     cassette.append(vcr_request, vcr_response)
+    pass
 
 
 async def record_responses(cassette, vcr_request, response):
@@ -187,7 +194,7 @@ async def record_responses(cassette, vcr_request, response):
             None if i else vcr_request.body,
             _serialize_headers(aiohttp_request.headers),
         )
-        await record_response(cassette, past_request, past_response)
+        record_response(cassette, past_request, past_response)
 
     # If we're following redirects, then the last request-response
     # we record is the one attached to the `response`.
@@ -200,7 +207,7 @@ async def record_responses(cassette, vcr_request, response):
             _serialize_headers(aiohttp_request.headers),
         )
 
-    await record_response(cassette, vcr_request, response)
+    record_response(cassette, vcr_request, response)
 
 
 def _build_cookie_header(session, cookies, cookie_header, url):
