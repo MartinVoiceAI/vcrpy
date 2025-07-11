@@ -1,9 +1,7 @@
 """Utilities for patching in cassettes"""
 
-import contextlib
 import functools
 import http.client as httplib
-import itertools
 import logging
 from unittest import mock
 
@@ -104,29 +102,34 @@ else:
 
 
 class CassettePatcherBuilder:
+
+
+    @staticmethod
     def _build_patchers_from_mock_triples_decorator(function):
         @functools.wraps(function)
-        def wrapped(self, *args, **kwargs):
-            return self._build_patchers_from_mock_triples(function(self, *args, **kwargs))
+        def wrapped(*args, **kwargs):
+            return CassettePatcherBuilder._build_patchers_from_mock_triples(function(*args, **kwargs))
 
         return wrapped
 
-    def build(self):
-        self._httplib()
-        self._requests()
-        self._boto3() 
-        self._urllib3()
-        self._httplib2()
-        self._tornado()
-        self._aiohttp()
-        self._httpx()
-        # self._build_patchers_from_mock_triples(self._cassette.custom_patches)
+    @staticmethod
+    def build():
+        CassettePatcherBuilder._httplib()
+        CassettePatcherBuilder._requests()
+        CassettePatcherBuilder._boto3() 
+        CassettePatcherBuilder._urllib3()
+        CassettePatcherBuilder._httplib2()
+        CassettePatcherBuilder._tornado()
+        CassettePatcherBuilder._aiohttp()
+        CassettePatcherBuilder._httpx()
 
-    def _build_patchers_from_mock_triples(self, mock_triples):
+    @staticmethod
+    def _build_patchers_from_mock_triples(mock_triples):
         for args in mock_triples:
-            self._build_patcher(*args)
+            CassettePatcherBuilder._build_patcher(*args)
 
-    def _build_patcher(self, obj, patched_attribute, replacement_class):
+    @staticmethod
+    def _build_patcher(obj, patched_attribute, replacement_class):
         if not hasattr(obj, patched_attribute):
             return
         if hasattr(obj, patched_attribute):
@@ -134,20 +137,23 @@ class CassettePatcherBuilder:
             setattr(obj, patched_attribute, replacement_class)
             setattr(replacement_class, "_baseclass", base_class)
 
+    @staticmethod
     @_build_patchers_from_mock_triples_decorator
-    def _httplib(self):
+    def _httplib():
         yield httplib, "HTTPConnection", VCRHTTPConnection
         yield httplib, "HTTPSConnection", VCRHTTPSConnection
 
-    def _requests(self):
+    @staticmethod
+    def _requests():
         try:
             from .stubs import requests_stubs
         except ImportError:  # pragma: no cover
             return ()
-        self._urllib3_patchers(cpool, conn, requests_stubs)
+        CassettePatcherBuilder._urllib3_patchers(cpool, conn, requests_stubs)
 
+    @staticmethod
     @_build_patchers_from_mock_triples_decorator
-    def _boto3(self):
+    def _boto3():
         try:
             # botocore using awsrequest
             import botocore.awsrequest as cpool
@@ -160,7 +166,8 @@ class CassettePatcherBuilder:
             yield cpool.AWSHTTPConnectionPool, "ConnectionCls", boto3_stubs.VCRRequestsHTTPConnection
             yield cpool.AWSHTTPSConnectionPool, "ConnectionCls", boto3_stubs.VCRRequestsHTTPSConnection
 
-    def _urllib3(self):
+    @staticmethod
+    def _urllib3():
         try:
             import urllib3.connection as conn
             import urllib3.connectionpool as cpool
@@ -168,10 +175,11 @@ class CassettePatcherBuilder:
             return ()
         from .stubs import urllib3_stubs
 
-        self._urllib3_patchers(cpool, conn, urllib3_stubs)
+        CassettePatcherBuilder._urllib3_patchers(cpool, conn, urllib3_stubs)
 
+    @staticmethod
     @_build_patchers_from_mock_triples_decorator
-    def _httplib2(self):
+    def _httplib2():
         try:
             import httplib2 as cpool
         except ImportError:  # pragma: no cover
@@ -190,8 +198,9 @@ class CassettePatcherBuilder:
                 },
             )
 
+    @staticmethod
     @_build_patchers_from_mock_triples_decorator
-    def _tornado(self):
+    def _tornado():
         try:
             import tornado.simple_httpclient as simple
         except ImportError:  # pragma: no cover
@@ -211,8 +220,9 @@ class CassettePatcherBuilder:
             new_fetch_impl = vcr_fetch_impl(_CurlAsyncHTTPClient_fetch_impl)
             yield curl.CurlAsyncHTTPClient, "fetch_impl", new_fetch_impl
 
+    @staticmethod
     @_build_patchers_from_mock_triples_decorator
-    def _aiohttp(self):
+    def _aiohttp():
         try:
             import aiohttp.client as client
         except ImportError:  # pragma: no cover
@@ -223,8 +233,9 @@ class CassettePatcherBuilder:
             new_request = vcr_request(_AiohttpClientSessionRequest)
             yield client.ClientSession, "_request", new_request
 
+    @staticmethod
     @_build_patchers_from_mock_triples_decorator
-    def _httpx(self):
+    def _httpx():
         try:
             import httpx
         except ImportError:  # pragma: no cover
@@ -238,7 +249,8 @@ class CassettePatcherBuilder:
             new_sync_client_send = sync_vcr_send(_HttpxSyncClient_send_single_request)
             yield httpx.Client, "_send_single_request", new_sync_client_send
 
-    def _urllib3_patchers(self, cpool, conn, stubs):
+    @staticmethod
+    def _urllib3_patchers(cpool, conn, stubs):
         mock_triples = (
             (conn, "VerifiedHTTPSConnection", stubs.VCRRequestsHTTPSConnection),
             (conn, "HTTPConnection", stubs.VCRRequestsHTTPConnection),
@@ -248,6 +260,6 @@ class CassettePatcherBuilder:
             (cpool.HTTPSConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPSConnection),
         )
 
-        self._build_patchers_from_mock_triples(mock_triples)
+        CassettePatcherBuilder._build_patchers_from_mock_triples(mock_triples)
 
 
