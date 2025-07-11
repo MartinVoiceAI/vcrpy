@@ -114,6 +114,15 @@ class CassettePatcherBuilder:
 
     @staticmethod
     def build():
+        # Import stubs here to load modules before patching
+        import vcr.stubs.urllib3_stubs
+        import vcr.stubs.requests_stubs
+        import vcr.stubs.boto3_stubs
+        import vcr.stubs.httplib2_stubs
+        import vcr.stubs.tornado_stubs
+        import vcr.stubs.aiohttp_stubs
+        import vcr.stubs.httpx_stubs
+
         CassettePatcherBuilder._httplib()
         CassettePatcherBuilder._requests()
         CassettePatcherBuilder._boto3() 
@@ -133,9 +142,16 @@ class CassettePatcherBuilder:
         if not hasattr(obj, patched_attribute):
             return
         if hasattr(obj, patched_attribute):
-            base_class = getattr(obj, patched_attribute)
-            setattr(obj, patched_attribute, replacement_class)
-            setattr(replacement_class, "_baseclass", base_class)
+            if isinstance(replacement_class, dict):
+                base_obj = getattr(obj, patched_attribute)
+                for key, value in replacement_class.items():
+                    base_class = base_obj[key]
+                    base_obj[key] = value
+                    setattr(value, "_baseclass", base_class)
+            else:
+                base_class = getattr(obj, patched_attribute)
+                setattr(obj, patched_attribute, replacement_class)
+                setattr(replacement_class, "_baseclass", base_class)
 
     @staticmethod
     @_build_patchers_from_mock_triples_decorator
