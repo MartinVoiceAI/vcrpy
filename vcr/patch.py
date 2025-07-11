@@ -115,13 +115,34 @@ class CassettePatcherBuilder:
     @staticmethod
     def build():
         # Import stubs here to load modules before patching
-        import vcr.stubs.urllib3_stubs
-        import vcr.stubs.requests_stubs
-        import vcr.stubs.boto3_stubs
-        import vcr.stubs.httplib2_stubs
-        import vcr.stubs.tornado_stubs
-        import vcr.stubs.aiohttp_stubs
-        import vcr.stubs.httpx_stubs
+        try:
+            import vcr.stubs.urllib3_stubs
+        except ImportError:
+            pass
+        try:   
+            import vcr.stubs.requests_stubs
+        except ImportError:
+            pass
+        try:
+                import vcr.stubs.boto3_stubs
+        except ImportError:
+            pass
+        try:
+            import vcr.stubs.httplib2_stubs
+        except ImportError:
+            pass
+        try:
+            import vcr.stubs.aiohttp_stubs
+        except ImportError:
+            pass
+        try:
+            import vcr.stubs.httpx_stubs
+        except ImportError:
+            pass
+        try:
+            import vcr.stubs.tornado_stubs
+        except ImportError:
+            pass
 
         CassettePatcherBuilder._httplib()
         CassettePatcherBuilder._requests()
