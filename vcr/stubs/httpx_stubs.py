@@ -118,17 +118,18 @@ def _shared_vcr_send(real_send, *args, **kwargs):
     real_request = args[1]
     vcr_request = _make_vcr_request(real_request, **kwargs)
 
-    cassette = current_cassette.get()
-    if cassette:
+    try:
+        cassette = current_cassette.get()
+    except LookupError:
+        return vcr_request, None
 
-        if cassette.can_play_response_for(vcr_request):
-            return vcr_request, _play_responses(cassette, real_request, vcr_request, args[0], kwargs)
+    if cassette.can_play_response_for(vcr_request):
+        return vcr_request, _play_responses(cassette, real_request, vcr_request, args[0], kwargs)
 
-        if cassette.write_protected and cassette.filter_request(vcr_request):
-            raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
+    if cassette.write_protected and cassette.filter_request(vcr_request):
+        raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
 
     _logger.info("%s not in cassette, sending to real server", vcr_request)
-    return vcr_request, None
 
 
 async def _record_responses(cassette, vcr_request, real_response, aread):
@@ -160,9 +161,12 @@ async def _async_vcr_send(real_send, *args, **kwargs):
 
     real_response = await real_send(*args, **kwargs)
 
-    cassette = current_cassette.get()
-    if cassette:
-        await _record_responses(cassette, vcr_request, real_response, aread=True)
+    try:
+        cassette = current_cassette.get()
+    except LookupError:
+        return real_response
+
+    await _record_responses(cassette, vcr_request, real_response, aread=True)
     return real_response
 
 
@@ -198,9 +202,12 @@ def _sync_vcr_send(real_send, *args, **kwargs):
         return response
 
     real_response = real_send(*args, **kwargs)
-    cassette = current_cassette.get()
-    if cassette:
-        _run_async_function(_record_responses, cassette, vcr_request, real_response, aread=False)
+    try:
+        cassette = current_cassette.get()
+    except LookupError:
+        return real_response
+
+    _run_async_function(_record_responses, cassette, vcr_request, real_response, aread=False)
     return real_response
 
 

@@ -254,8 +254,9 @@ def vcr_request(real_request):
     @functools.wraps(real_request)
     async def new_request(self, method, url, **kwargs):
 
-        cassette = current_cassette.get()
-        if cassette is None:
+        try:
+            cassette = current_cassette.get()
+        except LookupError:
             return await real_request(self, method, url, **kwargs)
 
         headers = kwargs.get("headers")

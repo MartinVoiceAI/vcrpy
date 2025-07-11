@@ -28,8 +28,9 @@ def vcr_fetch_impl(real_fetch_impl):
                 cassette.append(vcr_request, vcr_response)
                 return callback(response)
 
-        cassette = current_cassette.get()
-        if cassette is None:
+        try:
+            cassette = current_cassette.get()
+        except LookupError:
             real_fetch_impl(self, request, new_callback)
             return
 

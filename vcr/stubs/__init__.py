@@ -186,7 +186,10 @@ class VCRConnection:
 
     @property
     def cassette(self):
-        return current_cassette.get()
+        try:
+            return current_cassette.get()
+        except LookupError:
+            return None
 
     def _port_postfix(self):
         """
