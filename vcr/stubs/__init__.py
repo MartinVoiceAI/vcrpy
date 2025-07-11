@@ -9,8 +9,10 @@ from vcr.request import Request
 
 from . import compat
 
-log = logging.getLogger(__name__)
+from contextvars import ContextVar
+current_cassette = ContextVar("current_cassette")
 
+log = logging.getLogger(__name__)
 
 class VCRFakeSocket:
     """
@@ -181,7 +183,10 @@ class VCRHTTPResponse(HTTPResponse):
 
 class VCRConnection:
     # A reference to the cassette that's currently being patched in
-    cassette = None
+
+    @property
+    def cassette(self):
+        return current_cassette.get()
 
     def _port_postfix(self):
         """
@@ -282,17 +287,13 @@ class VCRConnection:
             # and return it.
 
             log.info(f"{self._vcr_request} not in cassette, sending to real server")
-            # This is imported here to avoid circular import.
-            # TODO(@IvanMalison): Refactor to allow normal import.
-            from vcr.patch import force_reset
 
-            with force_reset():
-                self.real_connection.request(
-                    method=self._vcr_request.method,
-                    url=self._url(self._vcr_request.uri),
-                    body=self._vcr_request.body,
-                    headers=self._vcr_request.headers,
-                )
+            self.real_connection.request(
+                method=self._vcr_request.method,
+                url=self._url(self._vcr_request.uri),
+                body=self._vcr_request.body,
+                headers=self._vcr_request.headers,
+            )
 
             # get the response
             response = self.real_connection.getresponse()
@@ -327,10 +328,7 @@ class VCRConnection:
             # Cassette is write-protected, don't actually connect
             return
 
-        from vcr.patch import force_reset
-
-        with force_reset():
-            return self.real_connection.connect(*args, **kwargs)
+        return self.real_connection.connect(*args, **kwargs)
 
         self._sock = VCRFakeSocket()
 
@@ -353,8 +351,7 @@ class VCRConnection:
         # the reset if you want to see what I mean :)
         from vcr.patch import force_reset
 
-        with force_reset():
-            self.real_connection = self._baseclass(*args, **kwargs)
+        self.real_connection = self._baseclass(*args, **kwargs)
 
         self._sock = None
 

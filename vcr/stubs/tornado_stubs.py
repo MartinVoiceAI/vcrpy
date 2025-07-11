@@ -9,10 +9,30 @@ from tornado.httpclient import HTTPResponse
 from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.request import Request
 
+from contextvars import ContextVar
+current_cassette = ContextVar("current_cassette")
 
-def vcr_fetch_impl(cassette, real_fetch_impl):
+def vcr_fetch_impl(real_fetch_impl):
     @functools.wraps(real_fetch_impl)
     def new_fetch_impl(self, request, callback):
+
+        def new_callback(response):
+                headers = [(k, response.headers.get_list(k)) for k in response.headers.keys()]
+
+                vcr_response = {
+                    "status": {"code": response.code, "message": response.reason},
+                    "headers": headers,
+                    "body": {"string": response.body},
+                    "url": response.effective_url,
+                }
+                cassette.append(vcr_request, vcr_response)
+                return callback(response)
+
+        cassette = current_cassette.get()
+        if cassette is None:
+            real_fetch_impl(self, request, new_callback)
+            return
+
         headers = request.headers.copy()
         if request.user_agent:
             headers.setdefault("User-Agent", request.user_agent)
@@ -71,18 +91,6 @@ def vcr_fetch_impl(cassette, real_fetch_impl):
                     ),
                     request_time=self.io_loop.time() - request.start_time,
                 )
-                return callback(response)
-
-            def new_callback(response):
-                headers = [(k, response.headers.get_list(k)) for k in response.headers.keys()]
-
-                vcr_response = {
-                    "status": {"code": response.code, "message": response.reason},
-                    "headers": headers,
-                    "body": {"string": response.body},
-                    "url": response.effective_url,
-                }
-                cassette.append(vcr_request, vcr_response)
                 return callback(response)
 
             real_fetch_impl(self, request, new_callback)

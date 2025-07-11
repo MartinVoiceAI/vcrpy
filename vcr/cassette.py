@@ -16,6 +16,10 @@ from .record_mode import RecordMode
 from .serializers import yamlserializer
 from .util import partition_dict
 
+
+from contextvars import ContextVar
+current_cassette = ContextVar("current_cassette")
+
 log = logging.getLogger(__name__)
 
 
@@ -50,28 +54,10 @@ class CassetteContextDecorator:
     def __init__(self, cls, args_getter):
         self.cls = cls
         self._args_getter = args_getter
-        self.__finish = None
         self.__cassette = None
-
-    def _patch_generator(self, cassette):
-        with contextlib.ExitStack() as exit_stack:
-            for patcher in CassettePatcherBuilder(cassette).build():
-                exit_stack.enter_context(patcher)
-            log_format = "{action} context for cassette at {path}."
-            log.debug(log_format.format(action="Entering", path=cassette._path))
-            yield cassette
-            log.debug(log_format.format(action="Exiting", path=cassette._path))
+        self.__token = None
 
     def __enter__(self):
-        # This assertion is here to prevent the dangerous behavior
-        # that would result from forgetting about a __finish before
-        # completing it.
-        # How might this condition be met? Here is an example:
-        # context_decorator = Cassette.use('whatever')
-        # with context_decorator:
-        #     with context_decorator:
-        #         pass
-        assert self.__finish is None, "Cassette already open."
         other_kwargs, cassette_kwargs = partition_dict(
             lambda key, _: key in self._non_cassette_arguments,
             self._args_getter(),
@@ -80,8 +66,8 @@ class CassetteContextDecorator:
             transformer = other_kwargs["path_transformer"]
             cassette_kwargs["path"] = transformer(cassette_kwargs["path"])
         self.__cassette = self.cls.load(**cassette_kwargs)
-        self.__finish = self._patch_generator(self.__cassette)
-        return next(self.__finish)
+        self.__token = current_cassette.set(self.__cassette)
+        return self.__cassette
 
     def __exit__(self, *exc_info):
         exception_was_raised = any(exc_info)
@@ -89,14 +75,8 @@ class CassetteContextDecorator:
         if record_on_exception or not exception_was_raised:
             self.__cassette._save()
             self.__cassette = None
-        # Fellow programmer, don't remove this `next`, if `self.__finish` is
-        # not consumed the unpatcher functions accumulated in the `exit_stack`
-        # object created in `_patch_generator` will not be called until
-        # `exit_stack` is not garbage collected.
-        # This works in CPython but not in Pypy, where the unpatchers will not
-        # be called until much later.
-        next(self.__finish, None)
-        self.__finish = None
+        if self.__token:
+            current_cassette.reset(self.__token)
 
     @wrapt.decorator
     def __call__(self, function, instance, args, kwargs):

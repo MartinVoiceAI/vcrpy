@@ -11,6 +11,9 @@ from vcr.filters import decode_response
 from vcr.request import Request as VcrRequest
 from vcr.serializers.compat import convert_body_to_bytes
 
+from contextvars import ContextVar
+current_cassette = ContextVar("current_cassette")
+
 _httpx_signature = inspect.signature(httpx.Client.request)
 
 try:
@@ -111,16 +114,18 @@ def _make_vcr_request(httpx_request, **kwargs):
     return VcrRequest(httpx_request.method, uri, body, headers)
 
 
-def _shared_vcr_send(cassette, real_send, *args, **kwargs):
+def _shared_vcr_send(real_send, *args, **kwargs):
     real_request = args[1]
-
     vcr_request = _make_vcr_request(real_request, **kwargs)
 
-    if cassette.can_play_response_for(vcr_request):
-        return vcr_request, _play_responses(cassette, real_request, vcr_request, args[0], kwargs)
+    cassette = current_cassette.get()
+    if cassette:
 
-    if cassette.write_protected and cassette.filter_request(vcr_request):
-        raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
+        if cassette.can_play_response_for(vcr_request):
+            return vcr_request, _play_responses(cassette, real_request, vcr_request, args[0], kwargs)
+
+        if cassette.write_protected and cassette.filter_request(vcr_request):
+            raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
 
     _logger.info("%s not in cassette, sending to real server", vcr_request)
     return vcr_request, None
@@ -146,22 +151,25 @@ def _play_responses(cassette, request, vcr_request, client, kwargs):
     return response
 
 
-async def _async_vcr_send(cassette, real_send, *args, **kwargs):
-    vcr_request, response = _shared_vcr_send(cassette, real_send, *args, **kwargs)
+async def _async_vcr_send(real_send, *args, **kwargs):
+    vcr_request, response = _shared_vcr_send(real_send, *args, **kwargs)
     if response:
         # add cookies from response to session cookie store
         args[0].cookies.extract_cookies(response)
         return response
 
     real_response = await real_send(*args, **kwargs)
-    await _record_responses(cassette, vcr_request, real_response, aread=True)
+
+    cassette = current_cassette.get()
+    if cassette:
+        await _record_responses(cassette, vcr_request, real_response, aread=True)
     return real_response
 
 
-def async_vcr_send(cassette, real_send):
+def async_vcr_send(real_send):
     @functools.wraps(real_send)
     def _inner_send(*args, **kwargs):
-        return _async_vcr_send(cassette, real_send, *args, **kwargs)
+        return _async_vcr_send(real_send, *args, **kwargs)
 
     return _inner_send
 
@@ -182,21 +190,23 @@ def _run_async_function(sync_func, *args, **kwargs):
         return asyncio.ensure_future(sync_func(*args, **kwargs))
 
 
-def _sync_vcr_send(cassette, real_send, *args, **kwargs):
-    vcr_request, response = _shared_vcr_send(cassette, real_send, *args, **kwargs)
+def _sync_vcr_send(real_send, *args, **kwargs):
+    vcr_request, response = _shared_vcr_send(real_send, *args, **kwargs)
     if response:
         # add cookies from response to session cookie store
         args[0].cookies.extract_cookies(response)
         return response
 
     real_response = real_send(*args, **kwargs)
-    _run_async_function(_record_responses, cassette, vcr_request, real_response, aread=False)
+    cassette = current_cassette.get()
+    if cassette:
+        _run_async_function(_record_responses, cassette, vcr_request, real_response, aread=False)
     return real_response
 
 
-def sync_vcr_send(cassette, real_send):
+def sync_vcr_send(real_send):
     @functools.wraps(real_send)
     def _inner_send(*args, **kwargs):
-        return _sync_vcr_send(cassette, real_send, *args, **kwargs)
+        return _sync_vcr_send(real_send, *args, **kwargs)
 
     return _inner_send

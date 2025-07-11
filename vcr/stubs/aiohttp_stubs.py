@@ -16,6 +16,9 @@ from yarl import URL
 from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.request import Request
 
+from contextvars import ContextVar
+current_cassette = ContextVar("current_cassette")
+
 log = logging.getLogger(__name__)
 
 
@@ -247,9 +250,14 @@ def _build_url_with_params(url_str: str, params: Mapping[str, Union[str, int, fl
     return url.with_query(q)
 
 
-def vcr_request(cassette, real_request):
+def vcr_request(real_request):
     @functools.wraps(real_request)
     async def new_request(self, method, url, **kwargs):
+
+        cassette = current_cassette.get()
+        if cassette is None:
+            return await real_request(self, method, url, **kwargs)
+
         headers = kwargs.get("headers")
         auth = kwargs.get("auth")
         headers = self._prepare_headers(headers)
