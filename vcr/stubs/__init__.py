@@ -305,16 +305,17 @@ class VCRConnection:
         response_data = response.data if hasattr(response, "data") else response.read()
 
         # put the response into the cassette
-        response = {
+        response_dict = {
             "status": {"code": response.status, "message": response.reason},
             "headers": serialize_headers(response),
             "body": {"string": response_data},
         }
         
         if self.cassette:
-            self.cassette.append(self._vcr_request, response)
-        
-        return VCRHTTPResponse(response)
+            self.cassette.append(self._vcr_request, response_dict)
+            return VCRHTTPResponse(response_dict)
+        else:
+            return response
 
     def set_debuglevel(self, *args, **kwargs):
         self.real_connection.set_debuglevel(*args, **kwargs)

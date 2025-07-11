@@ -67,6 +67,7 @@ class CassetteContextDecorator:
             cassette_kwargs["path"] = transformer(cassette_kwargs["path"])
         self.__cassette = self.cls.load(**cassette_kwargs)
         self.__token = current_cassette.set(self.__cassette)
+        CassettePatcherBuilder.build()
         return self.__cassette
 
     def __exit__(self, *exc_info):
