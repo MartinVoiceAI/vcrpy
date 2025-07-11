@@ -275,40 +275,45 @@ class VCRConnection:
         """Retrieve the response"""
         # Check to see if the cassette has a response for this request. If so,
         # then return it
-        if self.cassette.can_play_response_for(self._vcr_request):
-            log.info(f"Playing response for {self._vcr_request} from cassette")
-            response = self.cassette.play_response(self._vcr_request)
-            return VCRHTTPResponse(response)
-        else:
-            if self.cassette.write_protected and self.cassette.filter_request(self._vcr_request):
-                raise CannotOverwriteExistingCassetteException(
-                    cassette=self.cassette,
-                    failed_request=self._vcr_request,
-                )
+
+        if self.cassette:
+            if self.cassette.can_play_response_for(self._vcr_request):
+                log.info(f"Playing response for {self._vcr_request} from cassette")
+                response = self.cassette.play_response(self._vcr_request)
+                return VCRHTTPResponse(response)
+            else:
+                if self.cassette.write_protected and self.cassette.filter_request(self._vcr_request):
+                    raise CannotOverwriteExistingCassetteException(
+                        cassette=self.cassette,
+                        failed_request=self._vcr_request,
+                    )
 
             # Otherwise, we should send the request, then get the response
             # and return it.
 
-            log.info(f"{self._vcr_request} not in cassette, sending to real server")
+        log.info(f"{self._vcr_request} not in cassette, sending to real server")
 
-            self.real_connection.request(
-                method=self._vcr_request.method,
-                url=self._url(self._vcr_request.uri),
-                body=self._vcr_request.body,
-                headers=self._vcr_request.headers,
-            )
+        self.real_connection.request(
+            method=self._vcr_request.method,
+            url=self._url(self._vcr_request.uri),
+            body=self._vcr_request.body,
+            headers=self._vcr_request.headers,
+        )
 
-            # get the response
-            response = self.real_connection.getresponse()
-            response_data = response.data if hasattr(response, "data") else response.read()
+        # get the response
+        response = self.real_connection.getresponse()
+        response_data = response.data if hasattr(response, "data") else response.read()
 
-            # put the response into the cassette
-            response = {
-                "status": {"code": response.status, "message": response.reason},
-                "headers": serialize_headers(response),
-                "body": {"string": response_data},
-            }
+        # put the response into the cassette
+        response = {
+            "status": {"code": response.status, "message": response.reason},
+            "headers": serialize_headers(response),
+            "body": {"string": response_data},
+        }
+        
+        if self.cassette:
             self.cassette.append(self._vcr_request, response)
+        
         return VCRHTTPResponse(response)
 
     def set_debuglevel(self, *args, **kwargs):
@@ -322,12 +327,12 @@ class VCRConnection:
         and are not write-protected.
         """
 
-        if hasattr(self, "_vcr_request") and self.cassette.can_play_response_for(self._vcr_request):
+        if hasattr(self, "_vcr_request") and self.cassette and self.cassette.can_play_response_for(self._vcr_request):
             # We already have a response we are going to play, don't
             # actually connect
             return
 
-        if self.cassette.write_protected:
+        if self.cassette and self.cassette.write_protected:
             # Cassette is write-protected, don't actually connect
             return
 
