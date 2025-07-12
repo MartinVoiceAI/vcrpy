@@ -297,8 +297,8 @@ class CassettePatcherBuilder:
             (conn, "HTTPConnection", stubs.VCRRequestsHTTPConnection),
             (conn, "HTTPSConnection", stubs.VCRRequestsHTTPSConnection),
             (cpool, "is_connection_dropped", mock.Mock(return_value=False)),  # Needed on Windows only
-            (cpool.HTTPConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPConnection),
-            (cpool.HTTPSConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPSConnection),
+            # (cpool.HTTPConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPConnection),
+            # (cpool.HTTPSConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPSConnection),
         )
 
         CassettePatcherBuilder._build_patchers_from_mock_triples(mock_triples)
