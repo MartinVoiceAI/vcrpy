@@ -276,6 +276,7 @@ class VCRConnection:
         # Check to see if the cassette has a response for this request. If so,
         # then return it
 
+        print("getresponse cassette", self.cassette)
         if self.cassette:
             if self.cassette.can_play_response_for(self._vcr_request):
                 log.info(f"Playing response for {self._vcr_request} from cassette")
@@ -302,16 +303,16 @@ class VCRConnection:
 
         # get the response
         response = self.real_connection.getresponse()
-        response_data = response.data if hasattr(response, "data") else response.read()
-
-        # put the response into the cassette
-        response_dict = {
-            "status": {"code": response.status, "message": response.reason},
-            "headers": serialize_headers(response),
-            "body": {"string": response_data},
-        }
         
         if self.cassette:
+            response_data = response.data if hasattr(response, "data") else response.read()
+
+            # put the response into the cassette
+            response_dict = {
+                "status": {"code": response.status, "message": response.reason},
+                "headers": serialize_headers(response),
+                "body": {"string": response_data},
+            }
             self.cassette.append(self._vcr_request, response_dict)
             return VCRHTTPResponse(response_dict)
         else:

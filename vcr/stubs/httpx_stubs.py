@@ -153,18 +153,19 @@ def _play_responses(cassette, request, vcr_request, client, kwargs):
 
 
 async def _async_vcr_send(real_send, *args, **kwargs):
+    try:
+        cassette = current_cassette.get()
+    except LookupError:
+        real_response = await real_send(*args, **kwargs)
+        return real_response
+    
     vcr_request, response = _shared_vcr_send(real_send, *args, **kwargs)
     if response:
         # add cookies from response to session cookie store
         args[0].cookies.extract_cookies(response)
         return response
 
-    real_response = await real_send(*args, **kwargs)
-
-    try:
-        cassette = current_cassette.get()
-    except LookupError:
-        return real_response
+    real_response = await real_send(*args, **kwargs)    
 
     await _record_responses(cassette, vcr_request, real_response, aread=True)
     return real_response
@@ -195,6 +196,12 @@ def _run_async_function(sync_func, *args, **kwargs):
 
 
 def _sync_vcr_send(real_send, *args, **kwargs):
+    try:
+        cassette = current_cassette.get()
+    except LookupError:
+        real_response = real_send(*args, **kwargs)
+        return real_response
+    
     vcr_request, response = _shared_vcr_send(real_send, *args, **kwargs)
     if response:
         # add cookies from response to session cookie store
@@ -202,10 +209,6 @@ def _sync_vcr_send(real_send, *args, **kwargs):
         return response
 
     real_response = real_send(*args, **kwargs)
-    try:
-        cassette = current_cassette.get()
-    except LookupError:
-        return real_response
 
     _run_async_function(_record_responses, cassette, vcr_request, real_response, aread=False)
     return real_response

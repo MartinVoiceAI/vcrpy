@@ -167,10 +167,14 @@ class CassettePatcherBuilder:
                 base_obj = getattr(obj, patched_attribute)
                 for key, value in replacement_class.items():
                     base_class = base_obj[key]
+                    while hasattr(base_class, "_baseclass"):
+                        base_class = getattr(base_class, "_baseclass")
                     base_obj[key] = value
                     setattr(value, "_baseclass", base_class)
             else:
                 base_class = getattr(obj, patched_attribute)
+                while hasattr(base_class, "_baseclass"):
+                    base_class = getattr(base_class, "_baseclass")
                 setattr(obj, patched_attribute, replacement_class)
                 setattr(replacement_class, "_baseclass", base_class)
 
