@@ -16,8 +16,7 @@ from yarl import URL
 from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.request import Request
 
-from contextvars import ContextVar
-current_cassette = ContextVar("current_cassette")
+from vcr.constants import current_cassette
 
 log = logging.getLogger(__name__)
 

@@ -9,8 +9,7 @@ from vcr.request import Request
 
 from . import compat
 
-from contextvars import ContextVar
-current_cassette = ContextVar("current_cassette")
+from vcr.constants import current_cassette
 
 log = logging.getLogger(__name__)
 

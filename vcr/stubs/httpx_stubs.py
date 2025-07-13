@@ -10,9 +10,8 @@ from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.filters import decode_response
 from vcr.request import Request as VcrRequest
 from vcr.serializers.compat import convert_body_to_bytes
+from vcr.constants import current_cassette
 
-from contextvars import ContextVar
-current_cassette = ContextVar("current_cassette")
 
 _httpx_signature = inspect.signature(httpx.Client.request)
 

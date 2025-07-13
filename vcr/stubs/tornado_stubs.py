@@ -9,8 +9,7 @@ from tornado.httpclient import HTTPResponse
 from vcr.errors import CannotOverwriteExistingCassetteException
 from vcr.request import Request
 
-from contextvars import ContextVar
-current_cassette = ContextVar("current_cassette")
+from vcr.constants import current_cassette
 
 def vcr_fetch_impl(real_fetch_impl):
     @functools.wraps(real_fetch_impl)

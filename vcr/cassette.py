@@ -7,6 +7,8 @@ from inspect import iscoroutinefunction
 
 import wrapt
 
+from vcr.constants import current_cassette
+
 from ._handle_coroutine import handle_coroutine
 from .errors import UnhandledHTTPRequestError
 from .matchers import get_matchers_results, method, requests_match, uri
@@ -15,10 +17,6 @@ from .persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, F
 from .record_mode import RecordMode
 from .serializers import yamlserializer
 from .util import partition_dict
-
-
-from contextvars import ContextVar
-current_cassette = ContextVar("current_cassette")
 
 log = logging.getLogger(__name__)
 

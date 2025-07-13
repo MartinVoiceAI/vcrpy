@@ -7,9 +7,6 @@ from unittest import mock
 
 from .stubs import VCRHTTPConnection, VCRHTTPSConnection
 
-from contextvars import ContextVar
-current_cassette = ContextVar("current_cassette")
-
 log = logging.getLogger(__name__)
 # Save some of the original types for the purposes of unpatching
 _HTTPConnection = httplib.HTTPConnection
