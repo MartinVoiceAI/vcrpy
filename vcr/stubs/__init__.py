@@ -272,6 +272,7 @@ class VCRConnection:
         if message_body is not None:
             self._vcr_request.body = message_body
 
+    @with_cassette
     def getresponse(self, _=False, **kwargs):
         """Retrieve the response"""
         # Check to see if the cassette has a response for this request. If so,
