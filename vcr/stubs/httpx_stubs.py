@@ -130,6 +130,7 @@ def _shared_vcr_send(real_send, *args, **kwargs):
         raise CannotOverwriteExistingCassetteException(cassette=cassette, failed_request=vcr_request)
 
     _logger.info("%s not in cassette, sending to real server", vcr_request)
+    return vcr_request, None
 
 
 async def _record_responses(cassette, vcr_request, real_response, aread):
