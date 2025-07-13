@@ -181,6 +181,13 @@ class VCRHTTPResponse(HTTPResponse):
             if not b:
                 break
 
+def _with_cassette(func):
+    def wrapper(self, *args, **kwargs):
+        if self.cassette:
+            return func(self, *args, **kwargs)
+        else:
+            return getattr(self.real_connection, func.__name__)(*args, **kwargs)
+    return wrapper
 
 class VCRConnection:
     # A reference to the cassette that's currently being patched in
@@ -226,6 +233,7 @@ class VCRConnection:
         prefix = f"{self._protocol}://{self._real_host()}{self._port_postfix()}"
         return uri.replace(prefix, "", 1)
 
+    @_with_cassette
     def request(self, method, url, body=None, headers=None, *args, **kwargs):
         """Persist the request metadata in self._vcr_request"""
         self._vcr_request = Request(method=method, uri=self._uri(url), body=body, headers=headers or {})
@@ -238,6 +246,7 @@ class VCRConnection:
 
         self._sock = VCRFakeSocket()
 
+    @_with_cassette
     def putrequest(self, method, url, *args, **kwargs):
         """
         httplib gives you more than one way to do it.  This is a way
@@ -247,9 +256,11 @@ class VCRConnection:
         self._vcr_request = Request(method=method, uri=self._uri(url), body="", headers={})
         log.debug(f"Got {self._vcr_request}")
 
+    @_with_cassette
     def putheader(self, header, *values):
         self._vcr_request.headers[header] = values
 
+    @_with_cassette
     def send(self, data):
         """
         This method is called after request(), to add additional data to the
@@ -258,11 +269,13 @@ class VCRConnection:
         """
         self._vcr_request.body = self._vcr_request.body + data if self._vcr_request.body else data
 
+    @_with_cassette
     def close(self):
         # Note: the real connection will only close if it's open, so
         # no need to check that here.
         self.real_connection.close()
 
+    @_with_cassette
     def endheaders(self, message_body=None):
         """
         Normally, this would actually send the request to the server.
@@ -272,11 +285,15 @@ class VCRConnection:
         if message_body is not None:
             self._vcr_request.body = message_body
 
-    @with_cassette
+    @_with_cassette
     def getresponse(self, _=False, **kwargs):
         """Retrieve the response"""
         # Check to see if the cassette has a response for this request. If so,
         # then return it
+
+        if not self.cassette:
+            return self.real_connection.getresponse(_=False, **kwargs)
+        
         if self.cassette.can_play_response_for(self._vcr_request):
             log.info(f"Playing response for {self._vcr_request} from cassette")
             response = self.cassette.play_response(self._vcr_request)
@@ -313,9 +330,11 @@ class VCRConnection:
             self.cassette.append(self._vcr_request, response)
         return VCRHTTPResponse(response)
 
+    @_with_cassette
     def set_debuglevel(self, *args, **kwargs):
         self.real_connection.set_debuglevel(*args, **kwargs)
 
+    @_with_cassette
     def connect(self, *args, **kwargs):
         """
         httplib2 uses this.  Connects to the server I'm assuming.
