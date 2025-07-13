@@ -166,7 +166,6 @@ async def record_response(cassette, vcr_request, response):
 
             body = {"string": b"".join(chunks)}
 
-            print("BODY", body)
     except ClientConnectionError:
         pass
 

@@ -94,7 +94,6 @@ class VCRHTTPResponse(HTTPResponse):
         return self._closed
 
     def read(self, *args, **kwargs):
-        print("read", args, kwargs)
         return self._content.read(*args, **kwargs)
 
     def read1(self, *args, **kwargs):
