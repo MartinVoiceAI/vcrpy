@@ -276,48 +276,45 @@ class VCRConnection:
         """Retrieve the response"""
         # Check to see if the cassette has a response for this request. If so,
         # then return it
-
-        print("getresponse cassette", self.cassette)
-        if self.cassette:
-            if self.cassette.can_play_response_for(self._vcr_request):
-                log.info(f"Playing response for {self._vcr_request} from cassette")
-                response = self.cassette.play_response(self._vcr_request)
-                return VCRHTTPResponse(response)
-            else:
-                if self.cassette.write_protected and self.cassette.filter_request(self._vcr_request):
-                    raise CannotOverwriteExistingCassetteException(
-                        cassette=self.cassette,
-                        failed_request=self._vcr_request,
-                    )
+        if self.cassette.can_play_response_for(self._vcr_request):
+            log.info(f"Playing response for {self._vcr_request} from cassette")
+            response = self.cassette.play_response(self._vcr_request)
+            return VCRHTTPResponse(response)
+        else:
+            if self.cassette.write_protected and self.cassette.filter_request(self._vcr_request):
+                raise CannotOverwriteExistingCassetteException(
+                    cassette=self.cassette,
+                    failed_request=self._vcr_request,
+                )
 
             # Otherwise, we should send the request, then get the response
             # and return it.
 
-        log.info(f"{self._vcr_request} not in cassette, sending to real server")
+            log.info(f"{self._vcr_request} not in cassette, sending to real server")
+            # This is imported here to avoid circular import.
+            # TODO(@IvanMalison): Refactor to allow normal import.
+            from vcr.patch import force_reset
 
-        self.real_connection.request(
-            method=self._vcr_request.method,
-            url=self._url(self._vcr_request.uri),
-            body=self._vcr_request.body,
-            headers=self._vcr_request.headers,
-        )
+            with force_reset():
+                self.real_connection.request(
+                    method=self._vcr_request.method,
+                    url=self._url(self._vcr_request.uri),
+                    body=self._vcr_request.body,
+                    headers=self._vcr_request.headers,
+                )
 
-        # get the response
-        response = self.real_connection.getresponse()
-        
-        if self.cassette:
+            # get the response
+            response = self.real_connection.getresponse()
             response_data = response.data if hasattr(response, "data") else response.read()
 
             # put the response into the cassette
-            response_dict = {
+            response = {
                 "status": {"code": response.status, "message": response.reason},
                 "headers": serialize_headers(response),
                 "body": {"string": response_data},
             }
-            self.cassette.append(self._vcr_request, response_dict)
-            return VCRHTTPResponse(response_dict)
-        else:
-            return response
+            self.cassette.append(self._vcr_request, response)
+        return VCRHTTPResponse(response)
 
     def set_debuglevel(self, *args, **kwargs):
         self.real_connection.set_debuglevel(*args, **kwargs)
