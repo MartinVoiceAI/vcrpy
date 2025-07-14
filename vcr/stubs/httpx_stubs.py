@@ -158,8 +158,7 @@ async def _async_vcr_send(cassette, real_send, *args, **kwargs):
     await _record_responses(cassette, vcr_request, real_response, aread=True)
     return real_response
 
-@_with_cassette
-def async_vcr_send(cassette, real_send):
+def async_vcr_send(real_send):
     @functools.wraps(real_send)
     def _inner_send(*args, **kwargs):
         try:
