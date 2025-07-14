@@ -20,6 +20,14 @@ from vcr.constants import current_cassette
 
 log = logging.getLogger(__name__)
 
+def _with_cassette(func):
+    def wrapper(real_send, *args, **kwargs):
+        try:
+            cassette = current_cassette.get()
+        except LookupError:
+            return real_send(*args, **kwargs)
+        return func(cassette, real_send, *args, **kwargs)
+    return wrapper
 
 class MockStream(asyncio.StreamReader, streams.AsyncStreamReaderMixin):
     pass
