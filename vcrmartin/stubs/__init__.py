@@ -5,6 +5,7 @@ from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
 from io import BytesIO
 
 from vcrmartin.errors import CannotOverwriteExistingCassetteException
+from vcrmartin.record_mode import RecordMode
 from vcrmartin.request import Request
 
 from . import compat
@@ -182,7 +183,7 @@ class VCRHTTPResponse(HTTPResponse):
 def _with_cassette(func):
     def wrapper(self, *args, **kwargs):
         if self.cassette:
-            return func(self, *args, **kwargs)
+            return func(self, cassette=self.cassette, *args, **kwargs)
         else:
             return getattr(self.real_connection, func.__name__)(*args, **kwargs)
     return wrapper
@@ -232,34 +233,46 @@ class VCRConnection:
         return uri.replace(prefix, "", 1)
 
     @_with_cassette
-    def request(self, method, url, body=None, headers=None, *args, **kwargs):
+    def request(self, cassette, method, url, body=None, headers=None, *args, **kwargs):
         """Persist the request metadata in self._vcr_request"""
+
         self._vcr_request = Request(method=method, uri=self._uri(url), body=body, headers=headers or {})
         log.debug(f"Got {self._vcr_request}")
 
-        # Note: The request may not actually be finished at this point, so
-        # I'm not sending the actual request until getresponse().  This
-        # allows me to compare the entire length of the response to see if it
-        # exists in the cassette.
+        if cassette.record_mode == RecordMode.ALL:
+            #Here we know that we won't have to replay the request, so we can just send it to the real connection
+            self.real_connection.request(method, url, body, headers, *args, **kwargs)
+        else:
+            # Note: The request may not actually be finished at this point, so
+            # I'm not sending the actual request until getresponse().  This
+            # allows me to compare the entire length of the response to see if it
+            # exists in the cassette.
 
-        self._sock = VCRFakeSocket()
+            self._sock = VCRFakeSocket()
 
     @_with_cassette
-    def putrequest(self, method, url, *args, **kwargs):
+    def putrequest(self, cassette, method, url, *args, **kwargs):
         """
         httplib gives you more than one way to do it.  This is a way
         to start building up a request.  Usually followed by a bunch
         of putheader() calls.
         """
-        self._vcr_request = Request(method=method, uri=self._uri(url), body="", headers={})
-        log.debug(f"Got {self._vcr_request}")
+        if not self._vcr_request:
+            self._vcr_request = Request(method=method, uri=self._uri(url), body="", headers={})
+            log.debug(f"Got {self._vcr_request}")
+        
+        if cassette.record_mode == RecordMode.ALL:
+            self.real_connection.putrequest(method, url, *args, **kwargs)
 
     @_with_cassette
-    def putheader(self, header, *values):
+    def putheader(self, cassette, header, *values):
         self._vcr_request.headers[header] = values
 
+        if cassette.record_mode == RecordMode.ALL:
+            self.real_connection.putheader(header, *values)
+
     @_with_cassette
-    def send(self, data):
+    def send(self, cassette, data):
         """
         This method is called after request(), to add additional data to the
         body of the request.  So if that happens, let's just append the data
@@ -267,14 +280,17 @@ class VCRConnection:
         """
         self._vcr_request.body = self._vcr_request.body + data if self._vcr_request.body else data
 
+        if cassette.record_mode == RecordMode.ALL:
+            self.real_connection.send(data)
+
     @_with_cassette
-    def close(self):
+    def close(self, cassette):
         # Note: the real connection will only close if it's open, so
         # no need to check that here.
         self.real_connection.close()
 
     @_with_cassette
-    def endheaders(self, message_body=None):
+    def endheaders(self, cassette, message_body=None):
         """
         Normally, this would actually send the request to the server.
         We are not sending the request until getting the response,
@@ -283,15 +299,18 @@ class VCRConnection:
         if message_body is not None:
             self._vcr_request.body = message_body
 
+        if cassette.record_mode == RecordMode.ALL:
+            self.real_connection.endheaders(message_body)
+
     @_with_cassette
-    def getresponse(self, _=False, **kwargs):
+    def getresponse(self, cassette, _=False, **kwargs):
         """Retrieve the response"""
         # Check to see if the cassette has a response for this request. If so,
         # then return it
 
         if not self.cassette:
             return self.real_connection.getresponse(_=False, **kwargs)
-        
+
         if self.cassette.can_play_response_for(self._vcr_request):
             log.info(f"Playing response for {self._vcr_request} from cassette")
             response = self.cassette.play_response(self._vcr_request)
@@ -308,12 +327,14 @@ class VCRConnection:
 
             log.info(f"{self._vcr_request} not in cassette, sending to real server")
             
-            self.real_connection.request(
-                method=self._vcr_request.method,
-                url=self._url(self._vcr_request.uri),
-                body=self._vcr_request.body,
-                headers=self._vcr_request.headers,
-            )
+            if not cassette.record_mode == RecordMode.ALL:
+                #We've already executed the request if we're in record mode ALL, so we can just get the response
+                self.real_connection.request(
+                    method=self._vcr_request.method,
+                    url=self._url(self._vcr_request.uri),
+                    body=self._vcr_request.body,
+                    headers=self._vcr_request.headers,
+                )
 
             # get the response
             response = self.real_connection.getresponse()
@@ -329,11 +350,11 @@ class VCRConnection:
         return VCRHTTPResponse(response)
 
     @_with_cassette
-    def set_debuglevel(self, *args, **kwargs):
+    def set_debuglevel(self, cassette, *args, **kwargs):
         self.real_connection.set_debuglevel(*args, **kwargs)
 
     @_with_cassette
-    def connect(self, *args, **kwargs):
+    def connect(self, cassette, *args, **kwargs):
         """
         httplib2 uses this.  Connects to the server I'm assuming.
 

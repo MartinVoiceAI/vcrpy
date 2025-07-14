@@ -1,4 +1,5 @@
 import logging
+from typing import Dict
 import warnings
 from io import BytesIO
 from urllib.parse import parse_qsl, urlparse
@@ -7,6 +8,12 @@ from .util import CaseInsensitiveDict, _is_nonsequence_iterator
 
 log = logging.getLogger(__name__)
 
+
+class MongoRequest:
+
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
 
 class Request:
     """
