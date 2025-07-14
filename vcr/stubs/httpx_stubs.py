@@ -22,16 +22,6 @@ except KeyError:
 
 _logger = logging.getLogger(__name__)
 
-def _with_cassette(func):
-    def wrapper(real_send, *args, **kwargs):
-        try:
-            cassette = current_cassette.get()
-        except LookupError:
-            return real_send(*args, **kwargs)
-        
-        return func(cassette, real_send, *args, **kwargs)
-    return wrapper
-
 
 def _transform_headers(httpx_response):
     """
@@ -172,7 +162,12 @@ async def _async_vcr_send(cassette, real_send, *args, **kwargs):
 def async_vcr_send(cassette, real_send):
     @functools.wraps(real_send)
     def _inner_send(*args, **kwargs):
-        return _async_vcr_send(cassette, real_send, *args, **kwargs)
+        try:
+            cassette = current_cassette.get()
+        except LookupError:
+            return real_send(*args, **kwargs)
+        else:
+            return _async_vcr_send(cassette, real_send, *args, **kwargs)
 
     return _inner_send
 
@@ -204,10 +199,14 @@ def _sync_vcr_send(cassette, real_send, *args, **kwargs):
     _run_async_function(_record_responses, cassette, vcr_request, real_response, aread=False)
     return real_response
 
-@_with_cassette
-def sync_vcr_send(cassette, real_send):
+def sync_vcr_send(real_send):
     @functools.wraps(real_send)
     def _inner_send(*args, **kwargs):
-        return _sync_vcr_send(cassette, real_send, *args, **kwargs)
+        try:
+            cassette = current_cassette.get()
+        except LookupError:
+            return real_send(*args, **kwargs)
+        else:
+            return _sync_vcr_send(cassette, real_send, *args, **kwargs)
 
     return _inner_send
