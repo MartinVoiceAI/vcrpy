@@ -4,7 +4,7 @@ import shutil
 
 import yaml
 
-import vcr.migration
+import vcrmartin.migration
 
 # Use the libYAML versions if possible
 try:

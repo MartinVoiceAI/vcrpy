@@ -1,4 +1,4 @@
-import vcr
+import vcrmartin
 
 
 class MockSerializer:

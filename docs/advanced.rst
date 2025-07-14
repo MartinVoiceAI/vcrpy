@@ -10,7 +10,7 @@ a nice addition. Here's an example:
 
 .. code:: python
 
-    import vcr
+    import vcrmartin
     import urllib2
 
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml') as cass:
@@ -69,7 +69,7 @@ Finally, register your class with VCR to use your new serializer.
 
 .. code:: python
 
-    import vcr
+    import vcrmartin
 
     class BogoSerializer:
         """
@@ -110,7 +110,7 @@ Finally, register your method with VCR to use your new request matcher.
 
 .. code:: python
 
-    import vcr
+    import vcrmartin
 
     def jurassic_matcher(r1, r2):
         assert r1.uri == r2.uri and 'JURASSIC PARK' in r1.body, \
@@ -143,7 +143,7 @@ Once the persister class is defined, register with VCR like so...
 
 .. code:: python
 
-    import vcr
+    import vcrmartin
     my_vcr = vcr.VCR()
 
     class CustomerPersister:
@@ -335,7 +335,7 @@ like this:
 ::
 
     import where_the_custom_https_connection_lives
-    from vcr.stubs import VCRHTTPSConnection
+    from vcrmartin.stubs import VCRHTTPSConnection
     my_vcr = config.VCR(custom_patches=((where_the_custom_https_connection_lives, 'CustomHTTPSConnection', VCRHTTPSConnection),))
 
     @my_vcr.use_cassette(...)

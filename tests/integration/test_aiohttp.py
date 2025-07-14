@@ -6,7 +6,7 @@ import pytest
 import pytest_httpbin.certs
 import yarl
 
-import vcr
+import vcrmartin
 
 asyncio = pytest.importorskip("asyncio")
 aiohttp = pytest.importorskip("aiohttp")

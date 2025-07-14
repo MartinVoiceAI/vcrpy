@@ -3,7 +3,7 @@ Usage
 
 .. code:: python
 
-    import vcr
+    import vcrmartin
     import urllib.request
 
     with vcr.use_cassette('fixtures/vcr_cassettes/synopsis.yaml'):
@@ -97,7 +97,7 @@ interactions.
 
 .. code:: python
 
-    from vcr.unittest import VCRTestCase
+    from vcrmartin.unittest import VCRTestCase
     import requests
 
     class MyTestCase(VCRTestCase):
@@ -148,7 +148,7 @@ instead.
 
 .. code:: python
 
-    from vcr.unittest import VCRMixin
+    from vcrmartin.unittest import VCRMixin
     import requests
     import unittest
 

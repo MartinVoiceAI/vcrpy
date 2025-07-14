@@ -4,8 +4,8 @@ from urllib.request import urlopen
 
 import pytest
 
-import vcr
-from vcr.cassette import Cassette
+import vcrmartin
+from vcrmartin.cassette import Cassette
 
 
 @pytest.mark.online

@@ -2,7 +2,7 @@ from urllib.request import urlopen
 
 import pytest
 
-import vcr
+import vcrmartin
 
 DEFAULT_URI = "http://httpbin.org/get?p1=q1&p2=q2"  # base uri for testing
 

@@ -6,7 +6,7 @@ from urllib.request import Request, urlopen
 
 import pytest
 
-import vcr
+import vcrmartin
 
 from ..assertions import assert_cassette_has_one_response, assert_is_json_bytes
 

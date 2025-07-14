@@ -5,7 +5,7 @@ from urllib.request import urlopen
 
 import pytest
 
-from vcr.unittest import VCRTestCase
+from vcrmartin.unittest import VCRTestCase
 
 
 def test_defaults():

@@ -5,7 +5,7 @@ import os
 from urllib.request import urlopen
 
 # Internal imports
-import vcr
+import vcrmartin
 
 
 def test_nonexistent_directory(tmpdir, httpbin):

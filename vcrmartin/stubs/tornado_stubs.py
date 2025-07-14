@@ -6,10 +6,10 @@ from io import BytesIO
 from tornado import httputil
 from tornado.httpclient import HTTPResponse
 
-from vcr.errors import CannotOverwriteExistingCassetteException
-from vcr.request import Request
+from vcrmartin.errors import CannotOverwriteExistingCassetteException
+from vcrmartin.request import Request
 
-from vcr.constants import current_cassette
+from vcrmartin.constants import current_cassette
 
 def vcr_fetch_impl(real_fetch_impl):
     @functools.wraps(real_fetch_impl)

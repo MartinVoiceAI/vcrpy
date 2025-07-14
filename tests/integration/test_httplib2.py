@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 import pytest
 import pytest_httpbin.certs
 
-import vcr
+import vcrmartin
 
 from ..assertions import assert_cassette_has_one_response
 

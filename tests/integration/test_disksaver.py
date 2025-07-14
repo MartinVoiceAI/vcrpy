@@ -8,7 +8,7 @@ from urllib.request import urlopen
 import pytest
 
 # Internal imports
-import vcr
+import vcrmartin
 
 
 @pytest.mark.online

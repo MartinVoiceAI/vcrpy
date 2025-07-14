@@ -6,9 +6,9 @@ from unittest import mock
 import pytest
 
 from vcr import VCR, mode, use_cassette
-from vcr.patch import _HTTPConnection, force_reset
-from vcr.request import Request
-from vcr.stubs import VCRHTTPSConnection
+from vcrmartin.patch import _HTTPConnection, force_reset
+from vcrmartin.request import Request
+from vcrmartin.stubs import VCRHTTPSConnection
 
 
 def test_vcr_use_cassette():

@@ -1,7 +1,7 @@
 import pytest
 
-from vcr.persisters.filesystem import FilesystemPersister
-from vcr.serializers import jsonserializer, yamlserializer
+from vcrmartin.persisters.filesystem import FilesystemPersister
+from vcrmartin.serializers import jsonserializer, yamlserializer
 
 
 @pytest.mark.parametrize(

@@ -7,7 +7,7 @@ If you don't like VCR's defaults, you can set options by instantiating a
 .. code:: python
 
 
-    import vcr
+    import vcrmartin
 
     my_vcr = vcr.VCR(
         serializer='json',

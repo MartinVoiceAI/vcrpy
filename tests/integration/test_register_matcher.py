@@ -2,7 +2,7 @@ from urllib.request import urlopen
 
 import pytest
 
-import vcr
+import vcrmartin
 
 
 def true_matcher(r1, r2):

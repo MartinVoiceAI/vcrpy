@@ -7,8 +7,8 @@ import json
 
 import pytest
 
-import vcr
-from vcr.errors import CannotOverwriteExistingCassetteException
+import vcrmartin
+from vcrmartin.errors import CannotOverwriteExistingCassetteException
 
 from ..assertions import assert_cassette_empty, assert_is_json_bytes
 

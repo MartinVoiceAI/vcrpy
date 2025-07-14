@@ -7,8 +7,8 @@ from urllib.request import urlopen
 import pytest
 
 # Internal imports
-import vcr
-from vcr.persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
+import vcrmartin
+from vcrmartin.persisters.filesystem import CassetteDecodeError, CassetteNotFoundError, FilesystemPersister
 
 
 class CustomFilesystemPersister:

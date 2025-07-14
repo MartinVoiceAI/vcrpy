@@ -8,7 +8,7 @@ from urllib.request import urlopen
 
 import pytest
 
-import vcr
+import vcrmartin
 
 # Conditional imports
 requests = pytest.importorskip("requests")

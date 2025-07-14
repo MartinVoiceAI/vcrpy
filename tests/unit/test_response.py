@@ -1,6 +1,6 @@
 import io
 
-from vcr.stubs import VCRHTTPResponse
+from vcrmartin.stubs import VCRHTTPResponse
 
 
 def test_response_should_have_headers_field():

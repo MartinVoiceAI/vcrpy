@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-import vcr
+import vcrmartin
 
 boto3 = pytest.importorskip("boto3")
 

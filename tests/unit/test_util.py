@@ -3,7 +3,7 @@ from io import BytesIO, StringIO
 import pytest
 
 from vcr import request
-from vcr.util import read_body
+from vcrmartin.util import read_body
 
 
 @pytest.mark.parametrize(

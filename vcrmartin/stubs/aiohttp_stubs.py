@@ -13,10 +13,10 @@ from aiohttp.helpers import strip_auth_from_url
 from multidict import CIMultiDict, CIMultiDictProxy, MultiDict
 from yarl import URL
 
-from vcr.errors import CannotOverwriteExistingCassetteException
-from vcr.request import Request
+from vcrmartin.errors import CannotOverwriteExistingCassetteException
+from vcrmartin.request import Request
 
-from vcr.constants import current_cassette
+from vcrmartin.constants import current_cassette
 
 log = logging.getLogger(__name__)
 

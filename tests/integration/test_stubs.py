@@ -2,7 +2,7 @@ import http.client as httplib
 import json
 import zlib
 
-import vcr
+import vcrmartin
 
 from ..assertions import assert_is_json_bytes
 

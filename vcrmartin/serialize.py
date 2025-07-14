@@ -1,7 +1,7 @@
 import yaml
 
-from vcr.request import Request
-from vcr.serializers import compat
+from vcrmartin.request import Request
+from vcrmartin.serializers import compat
 
 # version 1 cassettes started with VCR 1.0.x.
 # Before 1.0.x, there was no versioning.

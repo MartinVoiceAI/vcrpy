@@ -1,6 +1,6 @@
 import pytest
 
-from vcr.request import HeadersDict, Request
+from vcrmartin.request import HeadersDict, Request
 
 
 @pytest.mark.parametrize(

@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-import vcr
+import vcrmartin
 
 from ..assertions import assert_is_json_bytes
 

@@ -2,9 +2,9 @@ from unittest import mock
 
 import pytest
 
-from vcr.request import Request
-from vcr.serialize import deserialize, serialize
-from vcr.serializers import compat, jsonserializer, yamlserializer
+from vcrmartin.request import Request
+from vcrmartin.serialize import deserialize, serialize
+from vcrmartin.serializers import compat, jsonserializer, yamlserializer
 
 
 def test_deserialize_old_yaml_cassette():

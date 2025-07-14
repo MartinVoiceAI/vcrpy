@@ -4,7 +4,7 @@ import zlib
 from io import BytesIO
 from unittest import mock
 
-from vcr.filters import (
+from vcrmartin.filters import (
     decode_response,
     remove_headers,
     remove_post_data_parameters,
@@ -13,7 +13,7 @@ from vcr.filters import (
     replace_post_data_parameters,
     replace_query_parameters,
 )
-from vcr.request import Request
+from vcrmartin.request import Request
 
 
 def test_replace_headers():

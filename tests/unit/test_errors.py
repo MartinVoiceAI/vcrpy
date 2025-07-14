@@ -3,7 +3,7 @@ from unittest import mock
 import pytest
 
 from vcr import errors
-from vcr.cassette import Cassette
+from vcrmartin.cassette import Cassette
 
 
 @mock.patch("vcr.cassette.Cassette.find_requests_with_most_matches")

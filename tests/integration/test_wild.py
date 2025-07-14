@@ -5,7 +5,7 @@ from xmlrpc.server import SimpleXMLRPCServer
 
 import pytest
 
-import vcr
+import vcrmartin
 
 requests = pytest.importorskip("requests")
 

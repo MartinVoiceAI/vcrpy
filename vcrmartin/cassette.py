@@ -7,7 +7,7 @@ from inspect import iscoroutinefunction
 
 import wrapt
 
-from vcr.constants import current_cassette
+from vcrmartin.constants import current_cassette
 
 from ._handle_coroutine import handle_coroutine
 from .errors import UnhandledHTTPRequestError

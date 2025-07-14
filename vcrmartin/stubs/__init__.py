@@ -4,12 +4,12 @@ import logging
 from http.client import HTTPConnection, HTTPResponse, HTTPSConnection
 from io import BytesIO
 
-from vcr.errors import CannotOverwriteExistingCassetteException
-from vcr.request import Request
+from vcrmartin.errors import CannotOverwriteExistingCassetteException
+from vcrmartin.request import Request
 
 from . import compat
 
-from vcr.constants import current_cassette
+from vcrmartin.constants import current_cassette
 
 log = logging.getLogger(__name__)
 

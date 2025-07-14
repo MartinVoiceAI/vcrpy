@@ -8,7 +8,7 @@ import pytest_httpbin.certs
 from pytest import mark
 
 # Internal imports
-import vcr
+import vcrmartin
 
 from ..assertions import assert_cassette_has_one_response
 

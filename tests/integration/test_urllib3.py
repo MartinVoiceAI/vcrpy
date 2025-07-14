@@ -5,9 +5,9 @@
 import pytest
 import pytest_httpbin
 
-import vcr
-from vcr.patch import force_reset
-from vcr.stubs.compat import get_headers
+import vcrmartin
+from vcrmartin.patch import force_reset
+from vcrmartin.stubs.compat import get_headers
 
 from ..assertions import assert_cassette_empty, assert_is_json_bytes
 

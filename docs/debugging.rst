@@ -7,7 +7,7 @@ like this:
 
 .. code:: python
 
-    import vcr
+    import vcrmartin
     import requests
     import logging
 

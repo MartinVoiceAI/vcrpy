@@ -7,8 +7,8 @@ from unittest import mock
 from pytest import mark
 
 from vcr import mode, use_cassette
-from vcr.cassette import Cassette
-from vcr.stubs import VCRHTTPSConnection
+from vcrmartin.cassette import Cassette
+from vcrmartin.stubs import VCRHTTPSConnection
 
 
 class TestVCRConnection:

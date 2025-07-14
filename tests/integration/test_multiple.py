@@ -2,8 +2,8 @@ from urllib.request import urlopen
 
 import pytest
 
-import vcr
-from vcr.errors import CannotOverwriteExistingCassetteException
+import vcrmartin
+from vcrmartin.errors import CannotOverwriteExistingCassetteException
 
 
 def test_making_extra_request_raises_exception(tmpdir, httpbin):

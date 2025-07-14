@@ -6,11 +6,11 @@ from unittest.mock import MagicMock, patch
 
 import httpx
 
-from vcr.errors import CannotOverwriteExistingCassetteException
-from vcr.filters import decode_response
-from vcr.request import Request as VcrRequest
-from vcr.serializers.compat import convert_body_to_bytes
-from vcr.constants import current_cassette
+from vcrmartin.errors import CannotOverwriteExistingCassetteException
+from vcrmartin.filters import decode_response
+from vcrmartin.request import Request as VcrRequest
+from vcrmartin.serializers.compat import convert_body_to_bytes
+from vcrmartin.constants import current_cassette
 
 _httpx_signature = inspect.signature(httpx.Client.request)
 
