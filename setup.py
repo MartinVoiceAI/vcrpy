@@ -69,8 +69,8 @@ extras_require = {
 }
 
 setup(
-    name="vcrpy",
-    version=find_version("vcr", "__init__.py"),
+    name="vcrpy-martin",
+    version=find_version("vcrmartin", "__init__.py"),
     description=("Automatically mock your HTTP interactions to simplify and speed up testing"),
     long_description=long_description,
     long_description_content_type="text/x-rst",
