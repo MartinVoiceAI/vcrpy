@@ -349,8 +349,7 @@ class VCRConnection:
             self.cassette.append(self._vcr_request, response)
         return VCRHTTPResponse(response)
 
-    @_with_cassette
-    def set_debuglevel(self, cassette, *args, **kwargs):
+    def set_debuglevel(self, *args, **kwargs):
         self.real_connection.set_debuglevel(*args, **kwargs)
 
     @_with_cassette
