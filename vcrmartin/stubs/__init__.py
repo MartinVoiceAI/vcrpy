@@ -182,7 +182,8 @@ class VCRHTTPResponse(HTTPResponse):
 
 def _with_cassette(func):
     def wrapper(self, *args, **kwargs):
-        del kwargs["cassette"]
+        if "cassette" in kwargs:    
+            del kwargs["cassette"]
         if self.cassette:
             return func(self, cassette=self.cassette, *args, **kwargs)
         else:
