@@ -182,10 +182,8 @@ class VCRHTTPResponse(HTTPResponse):
 
 def _with_cassette(func):
     def wrapper(self, *args, **kwargs):
-        if "cassette" in kwargs:    
-            del kwargs["cassette"]
         if self.cassette:
-            return func(self, cassette=self.cassette, *args, **kwargs)
+            return func(self, *args, **kwargs)
         else:
             return getattr(self.real_connection, func.__name__)(*args, **kwargs)
     return wrapper
@@ -235,8 +233,13 @@ class VCRConnection:
         return uri.replace(prefix, "", 1)
 
     @_with_cassette
-    def request(self, cassette, method, url, body=None, headers=None, *args, **kwargs):
+    def request(self, method, url, body=None, headers=None, *args, **kwargs):
         """Persist the request metadata in self._vcr_request"""
+
+        cassette = self.cassette
+
+        if not cassette:
+            return self.real_connection.request(method, url, body, headers, *args, **kwargs)
 
         self._vcr_request = Request(method=method, uri=self._uri(url), body=body, headers=headers or {})
         log.debug(f"Got {self._vcr_request}")
@@ -253,12 +256,17 @@ class VCRConnection:
             self._sock = VCRFakeSocket()
 
     @_with_cassette
-    def putrequest(self, cassette, method, url, *args, **kwargs):
+    def putrequest(self, method, url, *args, **kwargs):
         """
         httplib gives you more than one way to do it.  This is a way
         to start building up a request.  Usually followed by a bunch
         of putheader() calls.
         """
+        cassette = self.cassette
+
+        if not cassette:
+            return self.real_connection.putrequest(method, url, *args, **kwargs)
+
         if not self._vcr_request:
             self._vcr_request = Request(method=method, uri=self._uri(url), body="", headers={})
             log.debug(f"Got {self._vcr_request}")
@@ -267,37 +275,57 @@ class VCRConnection:
             self.real_connection.putrequest(method, url, *args, **kwargs)
 
     @_with_cassette
-    def putheader(self, cassette, header, *values):
+    def putheader(self, header, *values):
+        cassette = self.cassette
+
+        if not cassette:
+            return self.real_connection.putheader(header, *values)
+
         self._vcr_request.headers[header] = values
 
         if cassette.record_mode == RecordMode.ALL:
             self.real_connection.putheader(header, *values)
 
     @_with_cassette
-    def send(self, cassette, data):
+    def send(self, data):
         """
         This method is called after request(), to add additional data to the
         body of the request.  So if that happens, let's just append the data
         onto the most recent request in the cassette.
         """
+        cassette = self.cassette
+
+        if not cassette:
+            return self.real_connection.send(data)
+
         self._vcr_request.body = self._vcr_request.body + data if self._vcr_request.body else data
 
         if cassette.record_mode == RecordMode.ALL:
             self.real_connection.send(data)
 
     @_with_cassette
-    def close(self, cassette):
+    def close(self):
         # Note: the real connection will only close if it's open, so
         # no need to check that here.
+        cassette = self.cassette
+
+        if not cassette:
+            return self.real_connection.close()
+
         self.real_connection.close()
 
     @_with_cassette
-    def endheaders(self, cassette, message_body=None):
+    def endheaders(self, message_body=None):
         """
         Normally, this would actually send the request to the server.
         We are not sending the request until getting the response,
         so bypass this part and just append the message body, if any.
         """
+        cassette = self.cassette
+
+        if not cassette:
+            return self.real_connection.endheaders(message_body)
+
         if message_body is not None:
             self._vcr_request.body = message_body
 
@@ -305,10 +333,12 @@ class VCRConnection:
             self.real_connection.endheaders(message_body)
 
     @_with_cassette
-    def getresponse(self, cassette, _=False, **kwargs):
+    def getresponse(self, _=False, **kwargs):
         """Retrieve the response"""
         # Check to see if the cassette has a response for this request. If so,
         # then return it
+
+        cassette = self.cassette
 
         if not self.cassette:
             return self.real_connection.getresponse(_=False, **kwargs)
@@ -355,13 +385,17 @@ class VCRConnection:
         self.real_connection.set_debuglevel(*args, **kwargs)
 
     @_with_cassette
-    def connect(self, cassette, *args, **kwargs):
+    def connect(self, *args, **kwargs):
         """
         httplib2 uses this.  Connects to the server I'm assuming.
 
         Only pass to the baseclass if we don't have a recorded response
         and are not write-protected.
         """
+        cassette = self.cassette
+
+        if not cassette:
+            return self.real_connection.connect(*args, **kwargs)
 
         if hasattr(self, "_vcr_request") and self.cassette and self.cassette.can_play_response_for(self._vcr_request):
             # We already have a response we are going to play, don't
