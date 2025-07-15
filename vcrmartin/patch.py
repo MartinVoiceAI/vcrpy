@@ -113,31 +113,31 @@ class CassettePatcherBuilder:
     def build():
         # Import stubs here to load modules before patching
         try:
-            import vcrmartin.stubs.urllib3_stubs
+            import vcr.stubs.urllib3_stubs
         except ImportError:
             pass
         try:   
-            import vcrmartin.stubs.requests_stubs
+            import vcr.stubs.requests_stubs
         except ImportError:
             pass
         try:
-                import vcrmartin.stubs.boto3_stubs
+                import vcr.stubs.boto3_stubs
         except ImportError:
             pass
         try:
-            import vcrmartin.stubs.httplib2_stubs
+            import vcr.stubs.httplib2_stubs
         except ImportError:
             pass
         try:
-            import vcrmartin.stubs.aiohttp_stubs
+            import vcr.stubs.aiohttp_stubs
         except ImportError:
             pass
         try:
-            import vcrmartin.stubs.httpx_stubs
+            import vcr.stubs.httpx_stubs
         except ImportError:
             pass
         try:
-            import vcrmartin.stubs.tornado_stubs
+            import vcr.stubs.tornado_stubs
         except ImportError:
             pass
 
@@ -293,7 +293,7 @@ class CassettePatcherBuilder:
             (conn, "VerifiedHTTPSConnection", stubs.VCRRequestsHTTPSConnection),
             (conn, "HTTPConnection", stubs.VCRRequestsHTTPConnection),
             (conn, "HTTPSConnection", stubs.VCRRequestsHTTPSConnection),
-            (cpool, "is_connection_dropped", mock.Mock(return_value=False)),  # Needed on Windows only
+            # (cpool, "is_connection_dropped", mock.Mock(return_value=False)),  # Needed on Windows only
             # (cpool.HTTPConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPConnection),
             # (cpool.HTTPSConnectionPool, "ConnectionCls", stubs.VCRRequestsHTTPSConnection),
         )
